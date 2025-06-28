@@ -1,41 +1,72 @@
 import { useState } from "react";
-import Input from "../components/Input";
+import { Link } from "react-router-dom";
 import { login } from "../services/auth";
+import "./Login.css";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setErro("");
+    
     try {
       const { token, usuario } = await login(email, senha);
       localStorage.setItem("token", token);
       localStorage.setItem("usuario", JSON.stringify(usuario));
       window.location.href = "/"; // redirecionar após login
     } catch (err) {
-  console.error(err); // exibe no console para debug
-  setErro("Credenciais inválidas");
-}
+      console.error(err); // exibe no console para debug
+      setErro("Credenciais inválidas");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow-md w-full max-w-md"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-center">RentKeeper Login</h1>
-        {erro && <p className="text-red-500 mb-4">{erro}</p>}
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <Input label="Senha" type="password" value={senha} onChange={(e) => setSenha(e.target.value)} />
+    <div className="login-container">
+      <form onSubmit={handleSubmit} className="login-form">
+        <h1 className="login-title">RentKeeper Login</h1>
+        
+        {erro && <div className="login-error">{erro}</div>}
+        
+        <div className="login-input-group">
+          <label className="login-label">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="login-input"
+            required
+          />
+        </div>
+        
+        <div className="login-input-group">
+          <label className="login-label">Senha</label>
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            className="login-input"
+            required
+          />
+        </div>
+        
         <button
           type="submit"
-          className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition"
+          className={`login-button ${isLoading ? 'loading' : ''}`}
+          disabled={isLoading}
         >
-          Entrar
+          {isLoading ? 'Entrando...' : 'Entrar'}
         </button>
+        
+        <div className="login-footer">
+          <p>Não tem uma conta? <Link to="/register">Registre-se</Link></p>
+        </div>
       </form>
     </div>
   );
