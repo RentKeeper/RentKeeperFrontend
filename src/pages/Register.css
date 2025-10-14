@@ -1,10 +1,13 @@
 .register-container {
+  width: 100%;
   min-height: 100vh;
+  margin: 0;
+  padding: 20px;
   background: linear-gradient(135deg, #101820 0%, #1a2a22 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  overflow-x: hidden;
 }
 
 .register-form {
@@ -285,4 +288,36 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Botão voltar à home */
+.back-home-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #b7ffcc;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+}
+
+.back-home-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #00ff88;
+  color: #00ff88;
+  transform: translateY(-1px);
+}
+
+.back-home-icon {
+  width: 16px;
+  height: 16px;
 } 

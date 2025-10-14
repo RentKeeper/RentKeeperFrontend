@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { register } from "../services/auth";
+import { ArrowLeft } from "lucide-react";
 import "./Register.css";
 
 export default function Register() {
@@ -159,6 +160,14 @@ export default function Register() {
 
   return (
     <div className="register-container">
+      <button 
+        onClick={() => navigate('/')} 
+        className="back-home-btn"
+        type="button"
+      >
+        <ArrowLeft className="back-home-icon" />
+        Voltar à Home
+      </button>
       <form onSubmit={handleSubmit} className="register-form">
         <h1 className="register-title">RentKeeper</h1>
         <p className="register-subtitle">Cadastre-se e encontre seu lugar no campo!</p>

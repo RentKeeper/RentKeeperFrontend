@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { login } from "../services/auth";
+import { ArrowLeft } from "lucide-react";
 import "./Login.css";
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -29,6 +31,14 @@ export default function Login() {
 
   return (
     <div className="login-container">
+      <button 
+        onClick={() => navigate('/')} 
+        className="back-home-btn"
+        type="button"
+      >
+        <ArrowLeft className="back-home-icon" />
+        Voltar à Home
+      </button>
       <form onSubmit={handleSubmit} className="login-form">
         <h1 className="login-title">RentKeeper Login</h1>
         
