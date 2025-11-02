@@ -1,94 +1,102 @@
-import { useState } from "react";
+import { ChangeEvent, FormEvent, ReactElement, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { register } from "../services/auth";
 import { ArrowLeft } from "lucide-react";
+import { isAxiosError } from "axios";
+import ApiService from "../services/apiService";
 import "./Register.css";
 
-export default function Register() {
+type FormDataState = {
+  nome: string;
+  email: string;
+  senha: string;
+  confirmarSenha: string;
+  cpf: string;
+  telefone: string;
+  posicao: number;
+};
+
+type PositionOption = {
+  id: number;
+  nome: string;
+};
+
+type ApiClient = ReturnType<typeof ApiService>;
+
+export default function Register(): ReactElement {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormDataState>({
     nome: "",
     email: "",
     senha: "",
     confirmarSenha: "",
     cpf: "",
     telefone: "",
-    posicao: 1 // Goleiro por padrão
+    posicao: 1,
   });
 
-  const [erro, setErro] = useState("");
-  const [sucesso, setSucesso] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [erro, setErro] = useState<string>("");
+  const [sucesso, setSucesso] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  const posicoes = [
+  const posicoes: PositionOption[] = [
     { id: 1, nome: "Goleiro" },
     { id: 2, nome: "Defensor" },
     { id: 3, nome: "Meia" },
     { id: 4, nome: "Atacante" },
-    { id: 5, nome: "Juiz" }
+    { id: 5, nome: "Juiz" },
   ];
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = event.target;
+
+    setFormData((prev) => {
+      if (name === "posicao") {
+        return { ...prev, posicao: Number(value) };
+      }
+
+      return { ...prev, [name]: value } as FormDataState;
+    });
   };
 
-  const validarCPF = (cpf) => {
-    cpf = cpf.replace(/[^\d]/g, '');
-    
-    if (cpf.length !== 11) return false;
-    
-    // Verifica se todos os dígitos são iguais
-    if (/^(\d)\1{10}$/.test(cpf)) return false;
-    
-    // Validação do primeiro dígito verificador
+  const validarCPF = (cpf: string): boolean => {
+    const digits = cpf.replace(/[^\d]/g, "");
+    if (digits.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(digits)) return false;
+
     let soma = 0;
-    for (let i = 0; i < 9; i++) {
-      soma += parseInt(cpf.charAt(i)) * (10 - i);
+    for (let i = 0; i < 9; i += 1) {
+      soma += parseInt(digits.charAt(i), 10) * (10 - i);
     }
     let resto = 11 - (soma % 11);
-    let dv1 = resto < 2 ? 0 : resto;
-    
-    // Validação do segundo dígito verificador
+    const dv1 = resto < 2 ? 0 : resto;
+
     soma = 0;
-    for (let i = 0; i < 10; i++) {
-      soma += parseInt(cpf.charAt(i)) * (11 - i);
+    for (let i = 0; i < 10; i += 1) {
+      soma += parseInt(digits.charAt(i), 10) * (11 - i);
     }
     resto = 11 - (soma % 11);
-    let dv2 = resto < 2 ? 0 : resto;
-    
-    return cpf.charAt(9) === dv1.toString() && cpf.charAt(10) === dv2.toString();
+    const dv2 = resto < 2 ? 0 : resto;
+
+    return digits.charAt(9) === dv1.toString() && digits.charAt(10) === dv2.toString();
   };
 
-  const validarEmail = (email) => {
+  const validarEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  const validarTelefone = (telefone) => {
-    const telefoneRegex = /^\(?[1-9]{2}\)? ?(?:[2-8]|9[1-9])[0-9]{3}\-?[0-9]{4}$/;
+  const validarTelefone = (telefone: string): boolean => {
+    const telefoneRegex = /^\(?[1-9]{2}\)? ?(?:[2-8]|9[1-9])[0-9]{3}-?[0-9]{4}$/;
     return telefoneRegex.test(telefone);
   };
 
-  const formatarCPF = (cpf) => {
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  };
-
-  const formatarTelefone = (telefone) => {
-    return telefone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     setErro("");
     setSucesso("");
     setIsLoading(true);
 
     try {
-      // Validações
       if (!formData.nome.trim()) {
         throw new Error("Nome é obrigatório");
       }
@@ -105,30 +113,27 @@ export default function Register() {
         throw new Error("Senhas não coincidem");
       }
 
-      if (!validarCPF(formData.cpf.replace(/[^\d]/g, ''))) {
+      if (!validarCPF(formData.cpf)) {
         throw new Error("CPF inválido");
       }
 
-      if (!validarTelefone(formData.telefone.replace(/[^\d]/g, ''))) {
+      if (!validarTelefone(formData.telefone)) {
         throw new Error("Telefone inválido");
       }
 
-      // Preparar dados para envio
       const dadosParaEnvio = {
         nome: formData.nome.trim(),
         email: formData.email.toLowerCase(),
         senha: formData.senha,
-        cpf: formData.cpf.replace(/[^\d]/g, ''),
-        telefone: formData.telefone.replace(/[^\d]/g, ''),
-        posicao: parseInt(formData.posicao)
+        cpf: formData.cpf.replace(/[^\d]/g, ""),
+        telefone: formData.telefone.replace(/[^\d]/g, ""),
+        posicao: formData.posicao,
       };
 
-      // Enviar para o backend
-      const usuarioCriado = await register(dadosParaEnvio);
-      
+      const api: ApiClient = ApiService();
+      await api.post("usuario", dadosParaEnvio);
+
       setSucesso("Cadastro realizado com sucesso! Redirecionando para login...");
-      
-      // Limpar formulário
       setFormData({
         nome: "",
         email: "",
@@ -136,20 +141,18 @@ export default function Register() {
         confirmarSenha: "",
         cpf: "",
         telefone: "",
-        posicao: 1
+        posicao: 1,
       });
 
-      // Redirecionar para login após 2 segundos
       setTimeout(() => {
         navigate("/login");
       }, 2000);
-
-    } catch (err) {
-      console.error(err);
-      if (err.response?.data?.message) {
-        setErro(err.response.data.message);
-      } else if (err.message) {
-        setErro(err.message);
+    } catch (error: unknown) {
+      console.error(error);
+      if (isAxiosError(error) && error.response?.data?.message) {
+        setErro(error.response.data.message as string);
+      } else if (error instanceof Error) {
+        setErro(error.message);
       } else {
         setErro("Erro ao realizar cadastro. Tente novamente.");
       }
@@ -160,21 +163,16 @@ export default function Register() {
 
   return (
     <div className="register-container">
-      <button 
-        onClick={() => navigate('/')} 
-        className="back-home-btn"
-        type="button"
-      >
-        <ArrowLeft className="back-home-icon" />
-        Voltar à Home
+      <button onClick={() => navigate("/")} className="back-home-btn" type="button">
+        <ArrowLeft className="back-home-icon" /> Voltar à Home
       </button>
       <form onSubmit={handleSubmit} className="register-form">
         <h1 className="register-title">RentKeeper</h1>
         <p className="register-subtitle">Cadastre-se e encontre seu lugar no campo!</p>
-        
+
         {erro && <div className="register-error">{erro}</div>}
         {sucesso && <div className="register-success">{sucesso}</div>}
-        
+
         <div className="register-input-group">
           <label className="register-label">Nome Completo</label>
           <input
@@ -236,12 +234,12 @@ export default function Register() {
               type="text"
               name="cpf"
               value={formData.cpf}
-              onChange={(e) => {
-                const valor = e.target.value.replace(/\D/g, '');
+              onChange={(event) => {
+                const valor = event.target.value.replace(/\D/g, "");
                 if (valor.length <= 11) {
-                  setFormData(prev => ({
+                  setFormData((prev) => ({
                     ...prev,
-                    cpf: valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4")
+                    cpf: valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4"),
                   }));
                 }
               }}
@@ -257,12 +255,18 @@ export default function Register() {
               type="text"
               name="telefone"
               value={formData.telefone}
-              onChange={(e) => {
-                const valor = e.target.value.replace(/\D/g, '');
+              onChange={(event) => {
+                const valor = event.target.value.replace(/\D/g, "");
                 if (valor.length <= 11) {
-                  setFormData(prev => ({
+          const formatted = valor.length > 10
+          ? valor.replace(/(\d{2})(\d{5})(\d{0,4})/, (_match: string, ddd: string, first: string, second: string = "") =>
+            second ? `(${ddd}) ${first}-${second}` : `(${ddd}) ${first}`)
+          : valor.replace(/(\d{2})(\d{4})(\d{0,4})/, (_match: string, ddd: string, first: string, second: string = "") =>
+            second ? `(${ddd}) ${first}-${second}` : `(${ddd}) ${first}`);
+
+                  setFormData((prev) => ({
                     ...prev,
-                    telefone: valor.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3")
+                    telefone: formatted,
                   }));
                 }
               }}
@@ -282,24 +286,22 @@ export default function Register() {
             className="register-select"
             required
           >
-            {posicoes.map(posicao => (
+            {posicoes.map((posicao) => (
               <option key={posicao.id} value={posicao.id}>
                 {posicao.nome}
               </option>
             ))}
           </select>
         </div>
-        
-        <button
-          type="submit"
-          className={`register-button ${isLoading ? 'loading' : ''}`}
-          disabled={isLoading}
-        >
-          {isLoading ? 'Cadastrando...' : 'Cadastrar'}
+
+        <button type="submit" className={`register-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>
+          {isLoading ? "Cadastrando..." : "Cadastrar"}
         </button>
-        
+
         <div className="register-footer">
-          <p>Já tem uma conta? <Link to="/login">Faça login</Link></p>
+          <p>
+            Já tem uma conta? <Link to="/login">Faça login</Link>
+          </p>
         </div>
       </form>
     </div>

@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { anunciosService } from "../services/anuncios";
 import { mapAnuncioToBackend } from "../utils/anuncioMapper";
+import Cookies from "js-cookie";
+import { getUserIdFromToken } from "../utils/jwt";
 import "./CriarAnuncio.css";
 
 export default function CriarAnuncio() {
@@ -56,26 +58,15 @@ export default function CriarAnuncio() {
     setError("");
 
     try {
-      // Pegar o usuário logado do localStorage
-      const usuarioLogado = JSON.parse(localStorage.getItem("usuario"));
-      if (!usuarioLogado) {
-        throw new Error("Usuário não está logado");
-      }
+      const token = Cookies.get("token");
+      const userId = getUserIdFromToken(token); // Extrai userId do token JWT
 
-      const anuncioData = {
-        ...formData,
-        usuarioId: usuarioLogado.id,
-        dataPartida: new Date(formData.dataPartida),
-        horaPartida: new Date(`2000-01-01T${formData.horaPartida}`)
-      };
-
-      const anuncioBackend = mapAnuncioToBackend(anuncioData);
-      await anunciosService.create(anuncioBackend);
-      
+      const anuncioPayload = mapAnuncioToBackend(formData, userId);
+      await anunciosService.post(anuncioPayload); 
+      // Navega de volta para a lista de anúncios após criar com sucesso
       navigate('/anuncios');
     } catch (err) {
-      console.error('Erro ao criar anúncio:', err);
-      setError(err.message || 'Erro ao criar anúncio. Tente novamente.');
+      setError(err?.message || "Erro ao criar anúncio");
     } finally {
       setLoading(false);
     }

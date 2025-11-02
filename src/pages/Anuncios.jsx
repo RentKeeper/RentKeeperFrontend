@@ -132,7 +132,7 @@ export default function Anuncios() {
       try {
         setLoading(true);
         setError(null);
-        const anunciosBackend = await anunciosService.getAll(1, 20); // Buscar 20 anúncios
+        const anunciosBackend = await anunciosService.get(1, 20); // Buscar 20 anúncios
         const anunciosMapeados = anunciosBackend.map(mapAnuncioFromBackend);
         setAnuncios(anunciosMapeados);
       } catch (err) {
