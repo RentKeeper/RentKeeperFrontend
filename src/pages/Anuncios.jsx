@@ -375,7 +375,15 @@ export default function Anuncios() {
                 </div>
 
                 <div className="booking-actions">
-                  <button className="primary-btn">
+                  <button
+                    className="primary-btn"
+                    onClick={() => {
+                      const alvo = selectedAnuncio?.id;
+                      if (alvo) {
+                        navigate(`/aluguel?anuncioId=${alvo}`);
+                      }
+                    }}
+                  >
                     Contratar Agora
                   </button>
                   <button className="secondary-btn">

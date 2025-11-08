@@ -13,6 +13,7 @@ type FormDataState = {
   cpf: string;
   telefone: string;
   posicao: number;
+  chavePix: string;
 };
 
 type PositionOption = {
@@ -32,6 +33,7 @@ export default function Register(): ReactElement {
     cpf: "",
     telefone: "",
     posicao: 1,
+    chavePix: "",
   });
 
   const [erro, setErro] = useState<string>("");
@@ -121,6 +123,11 @@ export default function Register(): ReactElement {
         throw new Error("Telefone inválido");
       }
 
+      const chavePixNormalizada = formData.chavePix.trim();
+      if (chavePixNormalizada && chavePixNormalizada.length < 3) {
+        throw new Error("Chave PIX deve ter pelo menos 3 caracteres");
+      }
+
       const dadosParaEnvio = {
         nome: formData.nome.trim(),
         email: formData.email.toLowerCase(),
@@ -128,6 +135,7 @@ export default function Register(): ReactElement {
         cpf: formData.cpf.replace(/[^\d]/g, ""),
         telefone: formData.telefone.replace(/[^\d]/g, ""),
         posicao: formData.posicao,
+        chavePix: chavePixNormalizada || null,
       };
 
       const api: ApiClient = ApiService();
@@ -142,6 +150,7 @@ export default function Register(): ReactElement {
         cpf: "",
         telefone: "",
         posicao: 1,
+        chavePix: "",
       });
 
       setTimeout(() => {
@@ -292,6 +301,20 @@ export default function Register(): ReactElement {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="register-input-group">
+          <label className="register-label">Chave PIX (opcional)</label>
+          <input
+            type="text"
+            name="chavePix"
+            value={formData.chavePix}
+            onChange={handleInputChange}
+            className="register-input"
+            placeholder="Informe sua chave PIX para receber pagamentos"
+            maxLength={200}
+          />
+          <small className="register-hint">Essa chave será exibida automaticamente ao contratar seus serviços.</small>
         </div>
 
         <button type="submit" className={`register-button ${isLoading ? "loading" : ""}`} disabled={isLoading}>

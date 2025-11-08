@@ -1,0 +1,493 @@
+.aluguel-page {
+  min-height: 100vh;
+  background: radial-gradient(circle at top, #1f2a44 0%, #161b29 45%, #0e111b 100%);
+  color: #f3f6ff;
+  padding: 32px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.aluguel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 18, 31, 0.6);
+  color: #f3f6ff;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-1px);
+  background: rgba(26, 30, 48, 0.85);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.brand-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(88, 193, 255, 0.2), rgba(60, 124, 255, 0.45));
+  border: 1px solid rgba(100, 149, 237, 0.4);
+}
+
+.brand h1 {
+  font-size: 1.3rem;
+  margin: 0;
+}
+
+.brand p {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.header-link {
+  border: none;
+  background: rgba(68, 82, 255, 0.18);
+  border-radius: 999px;
+  color: #f3f6ff;
+  padding: 10px 18px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s ease;
+}
+
+.header-link:hover {
+  background: rgba(90, 104, 255, 0.32);
+}
+
+.aluguel-main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.aluguel-section {
+  background: rgba(15, 20, 34, 0.82);
+  border: 1px solid rgba(95, 115, 189, 0.28);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 360px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.section-header p {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(16, 25, 38, 0.85);
+  border: 1px solid rgba(74, 93, 153, 0.32);
+  flex: 0 0 280px;
+}
+
+.search-box input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: inherit;
+  width: 100%;
+}
+
+.anuncio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.anuncio-card {
+  background: linear-gradient(140deg, rgba(27, 35, 63, 0.9), rgba(20, 26, 49, 0.9));
+  border: 1px solid transparent;
+  border-radius: 16px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.2s ease, border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.anuncio-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(99, 132, 255, 0.6);
+  box-shadow: 0 12px 24px rgba(20, 28, 58, 0.35);
+}
+
+.anuncio-card.selected {
+  border-color: rgba(115, 213, 255, 0.85);
+  box-shadow: 0 16px 28px rgba(25, 54, 105, 0.45);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.card-subtitle {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.card-price {
+  font-weight: 600;
+  color: #80f2ff;
+}
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.88rem;
+  opacity: 0.85;
+}
+
+.card-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #ffd369;
+}
+
+.rating .reviews {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.78rem;
+}
+
+.selected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(93, 212, 255, 0.18);
+  color: #82f2ff;
+  font-size: 0.76rem;
+}
+
+.detalhes-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(18, 22, 39, 0.92);
+  border: 1px solid rgba(99, 132, 255, 0.2);
+}
+
+.detalhes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.detalhes-head h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.detalhes-head span {
+  font-size: 0.84rem;
+  opacity: 0.68;
+}
+
+.detalhes-price {
+  font-weight: 600;
+  color: #80f2ff;
+  font-size: 1.05rem;
+}
+
+.detalhes-info {
+  display: grid;
+  gap: 10px;
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  opacity: 0.82;
+}
+
+.aluguel-form {
+  display: grid;
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  opacity: 0.78;
+}
+
+.form-group input {
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(85, 108, 187, 0.32);
+  background: rgba(19, 24, 40, 0.88);
+  color: inherit;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: rgba(120, 198, 255, 0.6);
+  box-shadow: 0 0 0 2px rgba(115, 213, 255, 0.2);
+}
+
+.form-hint {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.link-btn {
+  border: none;
+  background: none;
+  color: #80f2ff;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.82rem;
+}
+
+.feedback {
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+}
+
+.feedback.error {
+  background: rgba(255, 87, 87, 0.18);
+  border: 1px solid rgba(255, 118, 118, 0.4);
+}
+
+.feedback.success {
+  background: rgba(120, 198, 255, 0.18);
+  border: 1px solid rgba(120, 198, 255, 0.38);
+}
+
+.submit-btn {
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #4f8bff 0%, #75f8ff 100%);
+  color: #0e1526;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit-btn:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(90, 149, 255, 0.35);
+}
+
+.aluguel-loader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  padding: 32px 0;
+  opacity: 0.85;
+}
+
+.loader-icon {
+  animation: spin 1s linear infinite;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.aluguel-empty-card {
+  padding: 28px;
+  border-radius: 16px;
+  background: rgba(17, 21, 36, 0.85);
+  border: 1px dashed rgba(99, 132, 255, 0.32);
+  text-align: center;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+.aluguel-lista {
+  display: grid;
+  gap: 16px;
+}
+
+.aluguel-item {
+  background: rgba(18, 23, 39, 0.92);
+  border: 1px solid rgba(95, 115, 189, 0.28);
+  border-radius: 16px;
+  padding: 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.item-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.item-header span {
+  font-size: 0.8rem;
+  opacity: 0.65;
+}
+
+.item-price {
+  font-weight: 600;
+  color: #80f2ff;
+}
+
+.item-body {
+  display: grid;
+  gap: 8px;
+  font-size: 0.88rem;
+  opacity: 0.85;
+}
+
+.item-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 126, 126, 0.4);
+  background: rgba(255, 94, 94, 0.12);
+  color: #ff8a8a;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 110, 110, 0.2);
+  transform: translateY(-1px);
+}
+
+.cancel-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 960px) {
+  .aluguel-main {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+}
