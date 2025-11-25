@@ -76,6 +76,12 @@
   background: rgba(90, 104, 255, 0.32);
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 .aluguel-main {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -238,6 +244,11 @@
   border-radius: 18px;
   background: rgba(18, 22, 39, 0.92);
   border: 1px solid rgba(99, 132, 255, 0.2);
+}
+
+.detalhes-multiplos {
+  display: grid;
+  gap: 18px;
 }
 
 .detalhes-head {

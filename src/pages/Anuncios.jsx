@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
   Shield, 
@@ -20,11 +20,13 @@ import {
   Share2,
   DollarSign,
   CalendarDays,
-  Clock3
+  Clock3,
+  CirclePlus
 } from "lucide-react";
 import "./Anuncios.css";
 import { anunciosService } from "../services/anuncios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
+import UserMenu from "../components/UserMenu";
 
 const mockAnuncios = [
   {
@@ -118,6 +120,7 @@ export default function Anuncios() {
   const [anuncios, setAnuncios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedIds, setSelectedIds] = useState([]);
   const [filters, setFilters] = useState({
     priceRange: [50, 200],
     rating: 4.0,
@@ -125,6 +128,49 @@ export default function Anuncios() {
     distance: 10,
     tipo: 'all'
   });
+
+  const resolveAnuncioId = (value) => {
+    if (!value) return null;
+    const candidate = typeof value === "object"
+      ? value.id ?? value.IdAnuncio ?? value.anuncioId ?? value.Id ?? value.anuncioID
+      : value;
+    if (candidate === null || candidate === undefined || candidate === "") {
+      return null;
+    }
+    if (typeof candidate === "number" && Number.isFinite(candidate)) {
+      return candidate;
+    }
+    const numeric = Number(candidate);
+    if (Number.isFinite(numeric)) {
+      return numeric;
+    }
+    return typeof candidate === "string" ? candidate : null;
+  };
+
+  const isSelected = (anuncio) => {
+    const id = resolveAnuncioId(anuncio);
+    if (!id) return false;
+    return selectedIds.includes(id);
+  };
+
+  const toggleSelection = (event, anuncio) => {
+    const id = resolveAnuncioId(anuncio);
+    if (!id) return;
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const clearSelection = () => setSelectedIds([]);
+
+  const goToAluguel = () => {
+    if (selectedIds.length === 0) return;
+    navigate(`/aluguel?anuncioIds=${selectedIds.join(",")}`);
+  };
 
   // Carregar anúncios do backend
   useEffect(() => {
@@ -156,13 +202,18 @@ export default function Anuncios() {
     );
   };
 
-  const filteredAnuncios = anuncios.filter(anuncio => 
-    anuncio.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    anuncio.localizacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    anuncio.proprietario.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredAnuncios = useMemo(() => {
+    const termo = searchTerm.toLowerCase();
+    return anuncios.filter((anuncio) => (
+      anuncio.titulo?.toLowerCase().includes(termo) ||
+      anuncio.localizacao?.toLowerCase().includes(termo) ||
+      anuncio.proprietario?.toLowerCase().includes(termo)
+    ));
+  }, [anuncios, searchTerm]);
 
   if (selectedAnuncio) {
+    const anuncioId = resolveAnuncioId(selectedAnuncio);
+    const selecionado = anuncioId ? selectedIds.includes(anuncioId) : false;
     return (
       <div className="anuncios-container">
         {/* Header */}
@@ -219,6 +270,13 @@ export default function Anuncios() {
                       <div className="profile-price">
                         <div className="profile-price-value">R$ {selectedAnuncio.preco}</div>
                         <div className="profile-price-label">por jogo</div>
+                        <button
+                          type="button"
+                          className={`profile-select-btn ${selecionado ? 'selected' : ''}`}
+                          onClick={(event) => toggleSelection(event, selectedAnuncio)}
+                        >
+                          {selecionado ? 'Selecionado' : 'Selecionar'}
+                        </button>
                       </div>
                     </div>
                     
@@ -378,13 +436,31 @@ export default function Anuncios() {
                   <button
                     className="primary-btn"
                     onClick={() => {
-                      const alvo = selectedAnuncio?.id;
-                      if (alvo) {
-                        navigate(`/aluguel?anuncioId=${alvo}`);
+                      if (anuncioId) {
+                        navigate(`/aluguel?anuncioId=${anuncioId}`);
                       }
                     }}
                   >
                     Contratar Agora
+                  </button>
+                  <button
+                    className="secondary-btn"
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!anuncioId) return;
+                      const alreadySelected = selectedIds.includes(anuncioId);
+                      const nextIds = alreadySelected
+                        ? selectedIds
+                        : [...selectedIds, anuncioId];
+                      if (!alreadySelected) {
+                        setSelectedIds(nextIds);
+                      }
+                      navigate(`/aluguel?anuncioIds=${nextIds.join(",")}`);
+                    }}
+                  >
+                    <CirclePlus className="btn-icon" />
+                    <span>{selecionado ? 'Contratar selecionados' : 'Selecionar e contratar'}</span>
                   </button>
                   <button className="secondary-btn">
                     <MessageCircle className="btn-icon" />
@@ -422,9 +498,12 @@ export default function Anuncios() {
               <p className="header-subtitle">Encontrar Goleiro</p>
             </div>
           </div>
-          <button className="header-profile-btn">
-            Meu Perfil
-          </button>
+          <div className="header-actions">
+            <button className="header-profile-btn">
+              Meu Perfil
+            </button>
+            <UserMenu />
+          </div>
         </div>
       </header>
 
@@ -552,94 +631,138 @@ export default function Anuncios() {
 
           {/* Anuncios Grid */}
           {!loading && !error && (
-            <div className="anuncios-grid">
-              {filteredAnuncios.map((anuncio) => (
-                <div 
-                  key={anuncio.id}
-                  className="anuncio-card"
-                  onClick={() => setSelectedAnuncio(anuncio)}
-                >
-                  <div className="anuncio-image-container">
-                    <img 
-                      src={anuncio.image} 
-                      alt={anuncio.titulo}
-                      className="anuncio-image"
-                    />
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(anuncio.id);
-                      }}
-                      className="favorite-btn"
-                    >
-                      <Heart 
-                        className={`favorite-icon ${favorites.includes(anuncio.id) ? 'active' : ''}`}
-                      />
-                    </button>
-                    {anuncio.verified && (
-                      <div className="verified-badge">
-                        <CheckCircle className="verified-icon" />
-                      </div>
-                    )}
-                    <div className="availability-badge">
-                      <span className="availability-text">{anuncio.disponibilidade}</span>
-                    </div>
+            <>
+              {selectedIds.length > 0 && (
+                <div className="selection-bar">
+                  <div className="selection-info">
+                    {selectedIds.length} jogador{selectedIds.length > 1 ? 'es' : ''} selecionado{selectedIds.length > 1 ? 's' : ''}
                   </div>
-
-                  <div className="anuncio-content">
-                    <div className="anuncio-header">
-                      <div className="anuncio-info">
-                        <h3>{anuncio.titulo}</h3>
-                        <p>{anuncio.capacidade} de experiência • {anuncio.tipo}</p>
-                      </div>
-                      <div className="anuncio-price">
-                        <div className="price-value">R$ {anuncio.preco}</div>
-                        <div className="price-label">por jogo</div>
-                      </div>
-                    </div>
-
-                    <div className="anuncio-meta">
-                      <div className="rating-container">
-                        <Star className="star-icon" />
-                        <span className="rating-value">{anuncio.rating}</span>
-                        <span className="rating-count">({anuncio.reviews})</span>
-                      </div>
-                      <div className="location-container">
-                        <MapPin className="location-icon" />
-                        <span>{anuncio.distancia}</span>
-                      </div>
-                    </div>
-
-                    <div className="comodidades-tags">
-                      {anuncio.comodidades.slice(0, 2).map((comodidade, index) => (
-                        <span 
-                          key={index}
-                          className="comodidade-tag"
-                        >
-                          {comodidade}
-                        </span>
-                      ))}
-                      {anuncio.comodidades.length > 2 && (
-                        <span className="comodidade-tag more">
-                          +{anuncio.comodidades.length - 2}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="anuncio-footer">
-                      <div className="footer-info">
-                        <Clock className="footer-icon" />
-                        <span>Responde em {anuncio.responseTime}</span>
-                      </div>
-                      <div className="footer-info">
-                        <Users className="footer-icon" />
-                        <span>{anuncio.reservasCompletadas} jogos</span>
-                      </div>
-                    </div>
+                  <div className="selection-actions">
+                    <button
+                      type="button"
+                      className="selection-confirm-btn"
+                      onClick={goToAluguel}
+                    >
+                      Contratar selecionados
+                    </button>
+                    <button
+                      type="button"
+                      className="selection-clear-btn"
+                      onClick={clearSelection}
+                    >
+                      Limpar seleção
+                    </button>
                   </div>
                 </div>
-              ))}
-            </div>
+              )}
+              <div className="anuncios-grid">
+                {filteredAnuncios.map((anuncio) => {
+                  const anuncioId = resolveAnuncioId(anuncio);
+                  const cardSelected = isSelected(anuncio);
+                  const favoriteId = anuncioId ?? anuncio.id;
+                  const fallbackId = favoriteId ?? anuncio.id ?? anuncio.titulo;
+                  const comodidades = Array.isArray(anuncio.comodidades) ? anuncio.comodidades : [];
+                  return (
+                    <div 
+                      key={fallbackId}
+                      className={`anuncio-card ${cardSelected ? 'selected' : ''}`}
+                      onClick={() => setSelectedAnuncio(anuncio)}
+                    >
+                      <div className="anuncio-image-container">
+                        <img 
+                          src={anuncio.image} 
+                          alt={anuncio.titulo}
+                          className="anuncio-image"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(fallbackId);
+                          }}
+                          className="favorite-btn"
+                        >
+                          <Heart 
+                            className={`favorite-icon ${favorites.includes(fallbackId) ? 'active' : ''}`}
+                          />
+                        </button>
+                        {anuncio.verified && (
+                          <div className="verified-badge">
+                            <CheckCircle className="verified-icon" />
+                          </div>
+                        )}
+                        <div className="availability-badge">
+                          <span className="availability-text">{anuncio.disponibilidade}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className={`select-toggle ${cardSelected ? 'selected' : ''}`}
+                          onClick={(event) => toggleSelection(event, anuncio)}
+                        >
+                          {cardSelected ? (
+                            <CheckCircle className="select-toggle-icon" />
+                          ) : (
+                            <CirclePlus className="select-toggle-icon" />
+                          )}
+                          <span>{cardSelected ? 'Selecionado' : 'Selecionar'}</span>
+                        </button>
+                      </div>
+
+                      <div className="anuncio-content">
+                        <div className="anuncio-header">
+                          <div className="anuncio-info">
+                            <h3>{anuncio.titulo}</h3>
+                            <p>{anuncio.capacidade} de experiência • {anuncio.tipo}</p>
+                          </div>
+                          <div className="anuncio-price">
+                            <div className="price-value">R$ {anuncio.preco}</div>
+                            <div className="price-label">por jogo</div>
+                          </div>
+                        </div>
+
+                        <div className="anuncio-meta">
+                          <div className="rating-container">
+                            <Star className="star-icon" />
+                            <span className="rating-value">{anuncio.rating}</span>
+                            <span className="rating-count">({anuncio.reviews})</span>
+                          </div>
+                          <div className="location-container">
+                            <MapPin className="location-icon" />
+                            <span>{anuncio.distancia}</span>
+                          </div>
+                        </div>
+
+                        <div className="comodidades-tags">
+                          {comodidades.slice(0, 2).map((comodidade, index) => (
+                            <span 
+                              key={index}
+                              className="comodidade-tag"
+                            >
+                              {comodidade}
+                            </span>
+                          ))}
+                          {comodidades.length > 2 && (
+                            <span className="comodidade-tag more">
+                              +{comodidades.length - 2}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="anuncio-footer">
+                          <div className="footer-info">
+                            <Clock className="footer-icon" />
+                            <span>Responde em {anuncio.responseTime}</span>
+                          </div>
+                          <div className="footer-info">
+                            <Users className="footer-icon" />
+                            <span>{anuncio.reservasCompletadas} jogos</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
       </section>

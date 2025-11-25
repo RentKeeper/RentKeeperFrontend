@@ -7,6 +7,9 @@ import CriarAnuncio from "./pages/CriarAnuncio";
 import ComoFunciona from "./pages/ComoFunciona";
 import Aluguel from "./pages/Aluguel";
 import Pagamento from "./pages/Pagamento";
+import ReservasJogador from "./pages/ReservasJogador";
+import ReservasContratante from "./pages/ReservasContratante";
+import PerfilUsuario from "./pages/PerfilUsuario";
 
 function App() {
   return (
@@ -20,6 +23,9 @@ function App() {
         <Route path="/como-funciona" element={<ComoFunciona />} />
         <Route path="/aluguel" element={<Aluguel />} />
         <Route path="/pagamento" element={<Pagamento />} />
+        <Route path="/reservas-jogador" element={<ReservasJogador />} />
+        <Route path="/minhas-contratacoes" element={<ReservasContratante />} />
+        <Route path="/perfil" element={<PerfilUsuario />} />
       </Routes>
     </Router>
   );

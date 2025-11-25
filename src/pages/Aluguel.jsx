@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
 	Shield,
@@ -20,6 +20,7 @@ import { aluguelService } from "../services/aluguel";
 import { usuariosService } from "../services/usuarios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import { getUserIdFromToken } from "../utils/jwt";
+import UserMenu from "../components/UserMenu";
 import "./Aluguel.css";
 
 const resolveNumber = (value) => {
@@ -78,16 +79,17 @@ export default function Aluguel() {
 	const [searchParams] = useSearchParams();
 	const [token, setToken] = useState(() => resolveToken());
 	const [anuncios, setAnuncios] = useState([]);
-	const [selectedAnuncioId, setSelectedAnuncioId] = useState(null);
-	const [selectedUsuario, setSelectedUsuario] = useState(null);
-	const [formState, setFormState] = useState({ valor: "", avaliacao: "" });
+	const [selectedAnuncioIds, setSelectedAnuncioIds] = useState([]);
+	const [usuariosPorAnuncio, setUsuariosPorAnuncio] = useState({});
+	const [formState, setFormState] = useState({});
+	const [formFeedback, setFormFeedback] = useState({});
 	const [alugueis, setAlugueis] = useState([]);
 	const [loadingAnuncios, setLoadingAnuncios] = useState(true);
 	const [loadingAlugueis, setLoadingAlugueis] = useState(true);
-	const [submitting, setSubmitting] = useState(false);
 	const [removingId, setRemovingId] = useState(null);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [feedback, setFeedback] = useState({ error: "", success: "" });
+	const mountedRef = useRef(true);
 
 	const userId = useMemo(() => {
 		if (!token) return null;
@@ -101,16 +103,45 @@ export default function Aluguel() {
 
 	useEffect(() => {
 		const handleStorage = () => setToken(resolveToken());
-			window.addEventListener("storage", handleStorage);
-			setToken(resolveToken());
-			return () => window.removeEventListener("storage", handleStorage);
+		window.addEventListener("storage", handleStorage);
+		setToken(resolveToken());
+		return () => {
+			mountedRef.current = false;
+			window.removeEventListener("storage", handleStorage);
+		};
 	}, []);
 
-	const initialAnuncioParam = useMemo(() => {
-		const param = searchParams.get("anuncioId") ?? searchParams.get("anuncio") ?? null;
-		const numeric = resolveNumber(param);
-		return numeric;
+	const initialAnuncioIds = useMemo(() => {
+		const ids = new Set();
+		const directParams = searchParams.getAll("anuncioId");
+		directParams.forEach((value) => {
+			const numeric = resolveNumber(value);
+			if (numeric) ids.add(numeric);
+		});
+
+		const combined = searchParams.get("anuncioIds") ?? searchParams.get("anuncios") ?? null;
+		if (combined) {
+			combined
+				.split(",")
+				.map((value) => resolveNumber(value))
+				.filter((numeric) => numeric)
+				.forEach((numeric) => ids.add(numeric));
+		}
+
+		const legacySingle = searchParams.get("anuncio") ?? searchParams.get("id") ?? null;
+		const numericLegacy = resolveNumber(legacySingle);
+		if (numericLegacy) ids.add(numericLegacy);
+
+		return Array.from(ids);
 	}, [searchParams]);
+
+	const restrictToSelectedList = initialAnuncioIds.length > 0;
+	const hasSelectedIds = selectedAnuncioIds.length > 0;
+	const emptySelectionMessage = restrictToSelectedList
+		? hasSelectedIds
+			? "Nenhum jogador selecionado corresponde à busca atual."
+			: "Nenhum jogador selecionado no momento."
+		: "Nenhum jogador encontrado com os filtros informados.";
 
 	useEffect(() => {
 		const loadAnuncios = async () => {
@@ -213,70 +244,118 @@ export default function Aluguel() {
 	}, [userId]);
 
 	useEffect(() => {
-		if (!initialAnuncioParam) return;
 		if (!anuncios || anuncios.length === 0) return;
+		if (!initialAnuncioIds || initialAnuncioIds.length === 0) return;
 
-		const exists = anuncios.some((item) => item.anuncioId === initialAnuncioParam);
-		if (exists) {
-			setSelectedAnuncioId(initialAnuncioParam);
-		}
-	}, [initialAnuncioParam, anuncios]);
+		const availableSet = new Set(
+			anuncios
+				.map((item) => item.anuncioId)
+				.filter((id) => id !== null && id !== undefined)
+		);
 
-	useEffect(() => {
-		if (!selectedAnuncioId) return;
-		const selected = anuncios.find((item) => item.anuncioId === selectedAnuncioId);
-		if (!selected) return;
+		const validIds = initialAnuncioIds.filter((id) => availableSet.has(id));
+		if (validIds.length === 0) return;
 
-		setFormState((prev) => ({
-			...prev,
-				valor:
-					selected.preco !== undefined &&
-					selected.preco !== null &&
-					!Number.isNaN(Number(selected.preco))
-						? String(selected.preco)
-						: prev.valor,
-				avaliacao: "",
-		}));
-	}, [selectedAnuncioId, anuncios]);
+		setSelectedAnuncioIds((prev) => {
+			const merged = new Set(prev);
+			validIds.forEach((id) => merged.add(id));
+			return Array.from(merged);
+		});
+	}, [initialAnuncioIds, anuncios]);
 
 	useEffect(() => {
-		if (!selectedAnuncioId) {
-			setSelectedUsuario(null);
-			return;
-		}
+		setFormState((prev) => {
+			const next = { ...prev };
+			let changed = false;
 
-		const selected = anuncios.find((item) => item.anuncioId === selectedAnuncioId);
-		if (!selected) {
-			setSelectedUsuario(null);
-			return;
-		}
+			selectedAnuncioIds.forEach((id) => {
+				if (!next[id]) {
+					const anuncio = anuncios.find((item) => item.anuncioId === id);
+					next[id] = {
+						valor:
+							anuncio &&
+							anuncio.preco !== undefined &&
+							anuncio.preco !== null &&
+							!Number.isNaN(Number(anuncio.preco))
+								? String(anuncio.preco)
+								: "",
+						avaliacao: "",
+					};
+					changed = true;
+				}
+			});
 
-		const usuarioId = resolveNumber(selected.usuarioId ?? selected.raw?.UsuarioId ?? selected.raw?.usuarioId);
-		if (!usuarioId || usuarioId <= 0) {
-			setSelectedUsuario(null);
-			return;
-		}
+			Object.keys(next).forEach((key) => {
+				const numericKey = Number(key);
+				if (!selectedAnuncioIds.includes(numericKey)) {
+					delete next[key];
+					changed = true;
+				}
+			});
+
+			return changed ? next : prev;
+		});
+
+		setFormFeedback((prev) => {
+			const next = { ...prev };
+			let changed = false;
+			Object.keys(next).forEach((key) => {
+				const numericKey = Number(key);
+				if (!selectedAnuncioIds.includes(numericKey)) {
+					delete next[key];
+					changed = true;
+				}
+			});
+			return changed ? next : prev;
+		});
+	}, [selectedAnuncioIds, anuncios]);
+
+	useEffect(() => {
+		setUsuariosPorAnuncio((prev) => {
+			const next = { ...prev };
+			let changed = false;
+			Object.keys(next).forEach((key) => {
+				const numericKey = Number(key);
+				if (!selectedAnuncioIds.includes(numericKey)) {
+					delete next[key];
+					changed = true;
+				}
+			});
+			return changed ? next : prev;
+		});
 
 		let active = true;
-		const fetchUsuario = async () => {
-			try {
-				const usuario = await usuariosService.getById(usuarioId);
-				if (active) {
-					setSelectedUsuario(usuario);
-				}
-			} catch (err) {
-				console.error("Erro ao carregar usuário do anúncio", err);
-				if (active) {
-					setSelectedUsuario(null);
-				}
+		const fetchUsuarios = async () => {
+			const updates = {};
+			await Promise.all(
+				selectedAnuncioIds.map(async (id) => {
+					if (usuariosPorAnuncio[id]) return;
+					const anuncio = anuncios.find((item) => item.anuncioId === id);
+					if (!anuncio) return;
+					const usuarioId = resolveNumber(anuncio.usuarioId ?? anuncio.raw?.UsuarioId ?? anuncio.raw?.usuarioId);
+					if (!usuarioId || usuarioId <= 0) return;
+					try {
+						const usuario = await usuariosService.getById(usuarioId);
+						if (active) {
+							updates[id] = usuario;
+						}
+					} catch (err) {
+						console.error("Erro ao carregar usuário do anúncio", err);
+					}
+				})
+			);
+			if (active && Object.keys(updates).length > 0) {
+				setUsuariosPorAnuncio((prev) => ({ ...prev, ...updates }));
 			}
 		};
 
-		fetchUsuario();
+		if (selectedAnuncioIds.length > 0) {
+			fetchUsuarios();
+		}
 		return () => {
 			active = false;
 		};
-	}, [selectedAnuncioId, anuncios]);
+	}, [selectedAnuncioIds, anuncios, usuariosPorAnuncio]);
 
 	useEffect(() => {
 		if (!feedback.success) return undefined;
@@ -297,26 +376,37 @@ export default function Aluguel() {
 	}, [feedback.error]);
 
 	const filteredAnuncios = useMemo(() => {
-		if (!searchTerm.trim()) return anuncios;
-		const term = searchTerm.toLowerCase();
-		return anuncios.filter((item) => {
-			return [
-				item.titulo,
-				item.posicao,
-				item.localizacao,
-				item.localPartida,
-				item.experiencia,
-			]
-				.filter(Boolean)
-				.map((text) => String(text).toLowerCase())
-				.some((text) => text.includes(term));
-		});
-	}, [anuncios, searchTerm]);
+		const term = searchTerm.trim().toLowerCase();
+		const base = term
+			? anuncios.filter((item) => {
+				return [
+					item.titulo,
+					item.posicao,
+					item.localizacao,
+					item.localPartida,
+					item.experiencia,
+				]
+					.filter(Boolean)
+					.map((text) => String(text).toLowerCase())
+					.some((text) => text.includes(term));
+			})
+			: anuncios;
+		if (!restrictToSelectedList) {
+			return base;
+		}
+		const selectedSet = new Set(selectedAnuncioIds.map((id) => resolveNumber(id)).filter(Boolean));
+		if (selectedSet.size === 0) {
+			return [];
+		}
+		return base.filter((item) => selectedSet.has(resolveNumber(item.anuncioId)));
+	}, [anuncios, restrictToSelectedList, searchTerm, selectedAnuncioIds]);
 
-	const selectedAnuncio = useMemo(() => {
-		if (!selectedAnuncioId) return null;
-		return anuncios.find((item) => item.anuncioId === selectedAnuncioId) ?? null;
-	}, [selectedAnuncioId, anuncios]);
+	const selectedAnuncios = useMemo(() => {
+		if (!selectedAnuncioIds || selectedAnuncioIds.length === 0) return [];
+		return selectedAnuncioIds
+			.map((id) => anuncios.find((item) => item.anuncioId === id))
+			.filter(Boolean);
+	}, [selectedAnuncioIds, anuncios]);
 
 	const meusAlugueis = useMemo(() => {
 		return alugueis.map((item) => {
@@ -328,81 +418,166 @@ export default function Aluguel() {
 		});
 	}, [alugueis, anunciosMap]);
 
-	const handleSelectAnuncio = (anuncioId) => {
+	const handleToggleAnuncio = (anuncioId) => {
 		const numeric = resolveNumber(anuncioId);
 		if (!numeric) {
 			setFeedback({ error: "Não foi possível identificar este anúncio.", success: "" });
 			return;
 		}
 
-		setSelectedUsuario(null);
-		setSelectedAnuncioId(numeric);
 		setFeedback((prev) => ({ ...prev, error: "", success: "" }));
+		setSelectedAnuncioIds((prev) => {
+			if (prev.includes(numeric)) {
+				return prev.filter((id) => id !== numeric);
+			}
+			return [...prev, numeric];
+		});
 	};
 
-	const handleChangeForm = (event) => {
+	const handleChangeForm = (anuncioId, event) => {
 		const { name, value } = event.target;
 		setFormState((prev) => ({
 			...prev,
-			[name]: value,
+			[anuncioId]: {
+				...prev[anuncioId],
+				[name]: value,
+			},
 		}));
 	};
 
-	const handleSubmit = async (event) => {
+	const updateFormFeedback = (anuncioId, payload) => {
+		setFormFeedback((prev) => ({
+			...prev,
+			[anuncioId]: {
+				...prev[anuncioId],
+				...payload,
+			},
+		}));
+	};
+
+	const handleSubmit = async (event, anuncioId) => {
 		event.preventDefault();
-		if (!selectedAnuncioId) {
-			setFeedback({ error: "Selecione um jogador antes de contratar.", success: "" });
+		const numeric = resolveNumber(anuncioId);
+		if (!numeric) {
+			updateFormFeedback(anuncioId, {
+				error: "Não foi possível identificar este anúncio.",
+				success: "",
+			});
 			return;
 		}
 
 		if (!userId) {
-			setFeedback({ error: "É necessário estar autenticado para contratar um jogador.", success: "" });
+			updateFormFeedback(numeric, {
+				error: "É necessário estar autenticado para contratar um jogador.",
+				success: "",
+			});
 			return;
 		}
 
-		const valorNumber = resolveNumber(formState.valor);
+		const currentState = formState[numeric] ?? {};
+		const valorNumber = resolveNumber(currentState.valor);
 		if (!valorNumber || valorNumber <= 0) {
-			setFeedback({ error: "Informe um valor válido para o aluguel.", success: "" });
+			updateFormFeedback(numeric, {
+				error: "Informe um valor válido para o aluguel.",
+				success: "",
+			});
 			return;
 		}
 
-		const avaliacaoNumber = resolveNumber(formState.avaliacao);
+		const avaliacaoNumber = resolveNumber(currentState.avaliacao);
 		if (avaliacaoNumber !== null && (avaliacaoNumber < 0 || avaliacaoNumber > 5)) {
-			setFeedback({ error: "A avaliação deve estar entre 0 e 5.", success: "" });
+			updateFormFeedback(numeric, {
+				error: "A avaliação deve estar entre 0 e 5.",
+				success: "",
+			});
 			return;
 		}
 
-		setSubmitting(true);
-		setFeedback({ error: "", success: "" });
+		setFormState((prev) => {
+			const current = prev[numeric] ?? {};
+			return {
+				...prev,
+				[numeric]: {
+					...current,
+					submitting: true,
+				},
+			};
+		});
+		updateFormFeedback(numeric, { error: "", success: "" });
 
 		try {
 			const created = await aluguelService.create({
 				ValorAluguel: valorNumber,
 				AvaliacaoJogador: avaliacaoNumber,
-				AnuncioId: selectedAnuncioId,
+				AnuncioId: numeric,
 				ContratanteId: userId,
 			});
 
-			setFeedback({
+			updateFormFeedback(numeric, {
 				error: "",
 				success: "Aluguel registrado com sucesso!",
 			});
 
-			setFormState((prev) => ({ ...prev, avaliacao: "" }));
+			setFormState((prev) => ({
+				...prev,
+				[numeric]: {
+					...prev[numeric],
+					avaliacao: "",
+				},
+			}));
+
 			const newId = created?.id ?? created?.raw?.IdAluguel ?? null;
 			if (newId) {
-				navigate(`/pagamento?aluguelId=${newId}&anuncioId=${selectedAnuncioId}`);
+				navigate(`/pagamento?aluguelId=${newId}&anuncioId=${numeric}`);
 				return;
 			}
+
+			setTimeout(() => {
+				if (!mountedRef.current) return;
+				setFormFeedback((prev) => {
+					const current = prev[numeric];
+					if (!current || !current.success) return prev;
+					return {
+						...prev,
+						[numeric]: {
+							...current,
+							success: "",
+						},
+					};
+				});
+			}, 4000);
 			await loadAlugueis();
 		} catch (err) {
 			console.error("Erro ao registrar aluguel", err);
-			setFeedback({
+			updateFormFeedback(numeric, {
 				error: err?.response?.data?.mensagem ?? err?.message ?? "Erro ao registrar aluguel.",
 				success: "",
 			});
+			setTimeout(() => {
+				if (!mountedRef.current) return;
+				setFormFeedback((prev) => {
+					const current = prev[numeric];
+					if (!current || !current.error) return prev;
+					return {
+						...prev,
+						[numeric]: {
+							...current,
+							error: "",
+						},
+					};
+				});
+			}, 5000);
 		} finally {
-			setSubmitting(false);
+			setFormState((prev) => {
+				const current = prev[numeric] ?? {};
+				return {
+					...prev,
+					[numeric]: {
+						...current,
+						submitting: false,
+					},
+				};
+			});
 		}
 	};
 
@@ -451,17 +626,20 @@ export default function Aluguel() {
 					</div>
 				</div>
 
-				<button type="button" className="header-link" onClick={() => navigate("/anuncios")}>
-					Ver Anúncios
-				</button>
+				<div className="header-actions">
+					<button type="button" className="header-link" onClick={() => navigate("/anuncios")}>
+						Ver Anúncios
+					</button>
+					<UserMenu />
+				</div>
 			</header>
 
 			<main className="aluguel-main">
 				<section className="aluguel-section">
 					<div className="section-header">
 						<div>
-							<h2>Escolha um jogador</h2>
-							<p>Selecione um anúncio disponível para contratar.</p>
+							<h2>Escolha os jogadores</h2>
+							<p>Selecione um ou mais anúncios para contratar.</p>
 						</div>
 						<div className="search-box">
 							<Search size={16} />
@@ -478,18 +656,23 @@ export default function Aluguel() {
 						renderLoader("Carregando jogadores...")
 					) : filteredAnuncios.length === 0 ? (
 						<div className="aluguel-empty-card">
-							<p>Nenhum jogador encontrado com os filtros informados.</p>
+							<p>{emptySelectionMessage}</p>
+							{restrictToSelectedList && !hasSelectedIds && (
+								<button type="button" className="link-btn" onClick={() => navigate("/anuncios")}>
+									Voltar para a lista de goleiros
+								</button>
+							)}
 						</div>
 					) : (
 						<div className="anuncio-grid">
 							{filteredAnuncios.map((anuncio) => {
-								const isSelected = selectedAnuncioId === anuncio.anuncioId;
+								const isSelected = selectedAnuncioIds.includes(anuncio.anuncioId);
 								return (
 									<button
 										type="button"
 										key={anuncio.anuncioId ?? anuncio.key}
 										className={`anuncio-card ${isSelected ? "selected" : ""}`}
-										onClick={() => handleSelectAnuncio(anuncio.anuncioId)}
+										onClick={() => handleToggleAnuncio(anuncio.anuncioId)}
 									>
 										<div className="card-header">
 											<div>
@@ -544,114 +727,134 @@ export default function Aluguel() {
 						</div>
 					</div>
 
-					{selectedAnuncio ? (
-						<div className="detalhes-card">
-							<div className="detalhes-head">
-								<div>
-									<h3>{selectedAnuncio.titulo}</h3>
-									<span>{selectedAnuncio.posicao}</span>
-								</div>
-								<div className="detalhes-price">{formatCurrency(selectedAnuncio.preco)}</div>
-							</div>
+					{feedback.error && (
+						<div className="feedback error">{feedback.error}</div>
+					)}
 
-							<div className="detalhes-info">
-								<div className="info-row">
-									<MapPin size={16} />
-									<span>{selectedAnuncio.localPartida || "Local a definir"}</span>
-								</div>
-								<div className="info-row">
-									<Calendar size={16} />
-									<span>{formatDateTime(selectedAnuncio.dataHoraPartida)}</span>
-								</div>
-								<div className="info-row">
-									<Clock3 size={16} />
-									<span>
-										{Array.isArray(selectedAnuncio.disponibilidade) && selectedAnuncio.disponibilidade.length > 0
-											? selectedAnuncio.disponibilidade.join(", ")
-											: "Horários sob consulta"}
-									</span>
-								</div>
-								<div className="info-row">
-									<QrCode size={16} />
-									<span>
-										{selectedUsuario?.chavePix
-											? `Chave PIX: ${selectedUsuario.chavePix}`
-											: "Chave PIX do jogador não informada"}
-									</span>
-								</div>
-							</div>
+					{selectedAnuncios.length > 0 ? (
+						<div className="detalhes-multiplos">
+							{selectedAnuncios.map((anuncio) => {
+								const usuario = usuariosPorAnuncio[anuncio.anuncioId];
+								const currentState = formState[anuncio.anuncioId] ?? { valor: "", avaliacao: "", submitting: false };
+								const currentFeedback = formFeedback[anuncio.anuncioId] ?? { error: "", success: "" };
+								const valorInputId = `valor-${anuncio.anuncioId}`;
+								const avaliacaoInputId = `avaliacao-${anuncio.anuncioId}`;
+								const isSubmitting = Boolean(currentState.submitting);
+								return (
+									<div className="detalhes-card" key={anuncio.anuncioId ?? anuncio.key}>
+										<div className="detalhes-head">
+											<div>
+												<h3>{anuncio.titulo}</h3>
+												<span>{anuncio.posicao}</span>
+											</div>
+											<div className="detalhes-price">{formatCurrency(anuncio.preco)}</div>
+										</div>
 
-							<form onSubmit={handleSubmit} className="aluguel-form">
-								<div className="form-group">
-									<label htmlFor="valor">
-										<DollarSign size={16} /> Valor acordado
-									</label>
-									<input
-										id="valor"
-										name="valor"
-										type="number"
-										step="0.01"
-										min="0"
-										value={formState.valor}
-										onChange={handleChangeForm}
-										placeholder="Valor em reais"
-										required
-									/>
-								</div>
+										<div className="detalhes-info">
+											<div className="info-row">
+												<MapPin size={16} />
+												<span>{anuncio.localPartida || "Local a definir"}</span>
+											</div>
+											<div className="info-row">
+												<Calendar size={16} />
+												<span>{formatDateTime(anuncio.dataHoraPartida)}</span>
+											</div>
+											<div className="info-row">
+												<Clock3 size={16} />
+												<span>
+													{Array.isArray(anuncio.disponibilidade) && anuncio.disponibilidade.length > 0
+														? anuncio.disponibilidade.join(", ")
+														: "Horários sob consulta"}
+												</span>
+											</div>
+											<div className="info-row">
+												<QrCode size={16} />
+												<span>
+													{usuario?.chavePix
+														? `Chave PIX: ${usuario.chavePix}`
+														: "Chave PIX do jogador não informada"}
+												</span>
+											</div>
+										</div>
 
-								<div className="form-group">
-									<label htmlFor="avaliacao">
-										<Star size={16} /> Avaliação (opcional)
-									</label>
-									<input
-										id="avaliacao"
-										name="avaliacao"
-										type="number"
-										step="0.1"
-										min="0"
-										max="5"
-										value={formState.avaliacao}
-										onChange={handleChangeForm}
-										placeholder="0 a 5"
-									/>
-								</div>
+										<form onSubmit={(event) => handleSubmit(event, anuncio.anuncioId)} className="aluguel-form">
+											<div className="form-group">
+												<label htmlFor={valorInputId}>
+													<DollarSign size={16} /> Valor acordado
+												</label>
+												<input
+													id={valorInputId}
+													name="valor"
+													type="number"
+													step="0.01"
+													min="0"
+													value={currentState.valor}
+													onChange={(event) => handleChangeForm(anuncio.anuncioId, event)}
+													placeholder="Valor em reais"
+													required
+												/>
+											</div>
 
-								{!userId && (
-									<div className="form-hint">
-										Faça login para contratar um jogador.
-										<button
-											type="button"
-											className="link-btn"
-											onClick={() => navigate("/login")}
-										>
-											Entrar
-										</button>
+											<div className="form-group">
+												<label htmlFor={avaliacaoInputId}>
+													<Star size={16} /> Avaliação (opcional)
+												</label>
+												<input
+													id={avaliacaoInputId}
+													name="avaliacao"
+													type="number"
+													step="0.1"
+													min="0"
+													max="5"
+													value={currentState.avaliacao}
+													onChange={(event) => handleChangeForm(anuncio.anuncioId, event)}
+													placeholder="0 a 5"
+												/>
+											</div>
+
+											{!userId && (
+												<div className="form-hint">
+													Faça login para contratar um jogador.
+													<button
+														type="button"
+														className="link-btn"
+														onClick={() => navigate("/login")}
+													>
+														Entrar
+													</button>
+												</div>
+											)}
+
+											{currentFeedback.error && (
+												<div className="feedback error">{currentFeedback.error}</div>
+											)}
+
+											{currentFeedback.success && (
+												<div className="feedback success">{currentFeedback.success}</div>
+											)}
+
+											<button
+												type="submit"
+												className="submit-btn"
+												disabled={isSubmitting || !userId}
+											>
+												{isSubmitting ? (
+													<>
+														<Loader2 className="spinner" size={18} />
+														Registrando...
+													</>
+												) : (
+													"Contratar jogador"
+												)}
+											</button>
+										</form>
 									</div>
-								)}
-
-								{feedback.error && (
-									<div className="feedback error">{feedback.error}</div>
-								)}
-
-								{feedback.success && (
-									<div className="feedback success">{feedback.success}</div>
-								)}
-
-								<button type="submit" className="submit-btn" disabled={submitting || !userId}>
-									{submitting ? (
-										<>
-											<Loader2 className="spinner" size={18} />
-											Registrando...
-										</>
-									) : (
-										"Contratar jogador"
-									)}
-								</button>
-							</form>
+								);
+							})}
 						</div>
 					) : (
 						<div className="aluguel-empty-card">
-							<p>Selecione um anúncio na lista para visualizar os detalhes.</p>
+							<p>Selecione anúncios na lista para visualizar e contratar aqui.</p>
 						</div>
 					)}
 				</section>

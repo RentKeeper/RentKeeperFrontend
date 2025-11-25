@@ -21,6 +21,14 @@ export const usuariosService = {
     const response = await api.get(`usuario/${id}`);
     return normaliseUsuario(response?.data ?? null);
   },
+
+  async update(id, payload) {
+    if (!id) throw new Error("O identificador do usuário é obrigatório");
+    if (!payload) throw new Error("Os dados atualizados são obrigatórios");
+    const api = ApiService();
+    const response = await api.put(`usuario/${id}`, payload);
+    return normaliseUsuario(response?.data ?? null);
+  },
 };
 
 export default usuariosService;
