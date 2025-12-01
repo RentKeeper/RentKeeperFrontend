@@ -92,20 +92,59 @@ export const mapAnuncioFromBackend = (anuncio = {}) => {
     0
   );
 
-  const rating = parseNumber(
-    anuncio.rating ?? anuncio.Rating ?? anuncio.nota ?? anuncio.Nota ?? anuncio.avaliacao ?? anuncio.Avaliacao,
-    0
-  );
+  const averageRaw =
+    anuncio.mediaAvaliacao ??
+    anuncio.MediaAvaliacao ??
+    anuncio.media_avaliacao ??
+    anuncio.averageRating ??
+    anuncio.average_rating ??
+    anuncio.rating ??
+    anuncio.Rating ??
+    anuncio.nota ??
+    anuncio.Nota ??
+    anuncio.avaliacao ??
+    anuncio.Avaliacao;
 
-  const reviews = parseNumber(
+  const parsedAverage = (() => {
+    if (averageRaw === null || averageRaw === undefined || averageRaw === "") {
+      return null;
+    }
+    const numeric = Number(averageRaw);
+    return Number.isFinite(numeric) ? numeric : null;
+  })();
+
+  const rating = (() => {
+    if (parsedAverage !== null) {
+      const clamped = Math.max(0, Math.min(5, parsedAverage));
+      return Number.parseFloat(clamped.toFixed(2));
+    }
+    return parseNumber(
+      averageRaw,
+      parseNumber(
+        anuncio.rating ?? anuncio.Rating ?? anuncio.nota ?? anuncio.Nota ?? anuncio.avaliacao ?? anuncio.Avaliacao,
+        0
+      )
+    );
+  })();
+
+  const totalAvaliacoesRaw =
+    anuncio.totalAvaliacoes ??
+    anuncio.TotalAvaliacoes ??
+    anuncio.qtdAvaliacoes ??
+    anuncio.QtdAvaliacoes ??
     anuncio.reviews ??
-      anuncio.Reviews ??
-      anuncio.totalAvaliacoes ??
-      anuncio.TotalAvaliacoes ??
-      anuncio.qtdAvaliacoes ??
-      anuncio.QtdAvaliacoes,
-    0
-  );
+    anuncio.Reviews;
+
+  const reviews = (() => {
+    if (totalAvaliacoesRaw === null || totalAvaliacoesRaw === undefined || totalAvaliacoesRaw === "") {
+      return 0;
+    }
+    const numeric = Number(totalAvaliacoesRaw);
+    if (Number.isFinite(numeric)) {
+      return numeric;
+    }
+    return parseNumber(totalAvaliacoesRaw, 0);
+  })();
 
   const reservasCompletadas = parseNumber(
     anuncio.reservasCompletadas ??

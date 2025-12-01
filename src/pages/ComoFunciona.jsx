@@ -19,6 +19,7 @@ import {
   Zap
 } from 'lucide-react';
 import './ComoFunciona.css';
+import Logo from '../components/Logo';
 
 export default function ComoFunciona() {
   const navigate = useNavigate();
@@ -155,7 +156,7 @@ export default function ComoFunciona() {
             <span>Voltar</span>
           </button>
           <div className="header-brand">
-            <Shield className="header-icon" />
+            <Logo size={36} className="header-icon" />
             <div>
               <h1 className="header-title">RentKeeper</h1>
               <p className="header-subtitle">Como Funciona</p>

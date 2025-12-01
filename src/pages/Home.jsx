@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './Home.css';
 import { 
-  Shield, 
   Users, 
   Clock, 
   MapPin, 
@@ -11,10 +10,44 @@ import {
   TrendingUp,
   CheckCircle
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import UserMenu from '../components/UserMenu';
+import Logo from '../components/Logo';
+
+const resolveToken = () => {
+  if (typeof window === 'undefined') return null;
+  return (
+    Cookies.get('token') ||
+    window.localStorage?.getItem('token') ||
+    window.sessionStorage?.getItem('token') ||
+    null
+  );
+};
 
 export default function Home() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [token, setToken] = useState(() => resolveToken());
+
+  useEffect(() => {
+    const handleStorage = () => setToken(resolveToken());
+    if (typeof window !== 'undefined') {
+      window.addEventListener('storage', handleStorage);
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('storage', handleStorage);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    setToken(resolveToken());
+  }, [location.pathname]);
+
+  const isAuthenticated = Boolean(token);
   return (
     <div className="home-bg">
       {/* Header */}
@@ -22,7 +55,7 @@ export default function Home() {
         <div className="header-container">
           <div className="header-brand">
             <div className="header-icon-bg">
-              <Shield className="header-icon" />
+              <Logo size={40} className="header-icon" />
             </div>
             <div>
               <h1 className="header-title">RentKeeper</h1>
@@ -33,7 +66,18 @@ export default function Home() {
             <button type="button" className="header-link" onClick={() => navigate('/como-funciona')}>Como Funciona</button>
             <a href="#" className="header-link">Preços</a>
             <a href="#" className="header-link">Suporte</a>
-            <button type="button" className="header-btn" onClick={() => navigate('/login')}>Entrar</button>
+            {isAuthenticated ? (
+              <div className="header-user-access">
+                <button type="button" className="header-btn" onClick={() => navigate('/perfil')}>
+                  Meu Perfil
+                </button>
+                <UserMenu />
+              </div>
+            ) : (
+              <button type="button" className="header-btn" onClick={() => navigate('/login')}>
+                Entrar
+              </button>
+            )}
           </nav>
         </div>
       </header>
@@ -155,7 +199,7 @@ export default function Home() {
           <div className="footer-grid">
             <div>
               <div className="footer-brand">
-                <Shield className="footer-icon" />
+                <Logo size={36} className="footer-icon" />
                 <span className="footer-title">RentKeeper</span>
               </div>
               <p className="footer-desc">

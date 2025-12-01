@@ -27,6 +27,7 @@ import "./Anuncios.css";
 import { anunciosService } from "../services/anuncios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import UserMenu from "../components/UserMenu";
+import Logo from "../components/Logo";
 
 const mockAnuncios = [
   {
@@ -490,7 +491,7 @@ export default function Anuncios() {
         <div className="header-content">
           <div className="header-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <div className="header-icon-container">
-              <Shield className="header-icon" />
+              <Logo size={36} className="header-icon" />
               <div className="header-icon-glow"></div>
             </div>
             <div>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-	Shield,
 	Search,
 	MapPin,
 	Calendar,
@@ -24,6 +23,7 @@ import { usuariosService } from "../services/usuarios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import { getUserIdFromToken } from "../utils/jwt";
 import UserMenu from "../components/UserMenu";
+import Logo from "../components/Logo";
 
 const resolveNumber = (value) => {
 	if (value === null || value === undefined || value === "") {
@@ -351,7 +351,7 @@ export default function ReservasJogador() {
 			<header className="reservas-header">
 				<div className="brand" onClick={() => navigate("/")}>
 					<div className="brand-icon">
-						<Shield size={22} />
+						<Logo size={32} />
 					</div>
 					<div>
 						<h1>RentKeeper</h1>

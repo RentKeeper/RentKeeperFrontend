@@ -142,6 +142,34 @@ export const aluguelService = {
     return normaliseResponse(response?.data ?? null);
   },
 
+  async rate(id, rating) {
+    if (!id) throw new Error("O identificador do aluguel é obrigatório");
+
+    const numericRating = Number(rating);
+    if (!Number.isFinite(numericRating) || numericRating < 1 || numericRating > 5) {
+      throw new Error("Informe uma nota entre 1 e 5");
+    }
+
+    const existing = await this.getById(id);
+    if (!existing) {
+      throw new Error("Aluguel não encontrado");
+    }
+
+    const raw = existing.raw ?? {};
+    const valor = raw.ValorAluguel ?? raw.valorAluguel ?? raw.valor ?? existing.valor ?? 0;
+    const anuncioId = raw.AnuncioId ?? raw.anuncioId ?? existing.anuncioId;
+    const contratanteId = raw.ContratanteId ?? raw.contratanteId ?? existing.contratanteId;
+
+    const payload = {
+      ValorAluguel: Number(valor ?? 0),
+      AvaliacaoJogador: numericRating,
+      AnuncioId: Number(anuncioId ?? 0),
+      ContratanteId: Number(contratanteId ?? 0),
+    };
+
+    return this.update(id, payload);
+  },
+
   async remove(id) {
     if (!id) throw new Error("O identificador do aluguel é obrigatório");
     const api = ApiService();

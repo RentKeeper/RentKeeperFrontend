@@ -35,11 +35,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, rgba(14, 165, 233, 0.6), rgba(16, 185, 129, 0.35));
+  box-shadow: 0 0 18px rgba(14, 165, 233, 0.35);
 }
 .header-icon {
   width: 40px;
   height: 40px;
-  color: #34d399;
   z-index: 1;
 }
 .header-title {
@@ -56,6 +58,8 @@
   display: flex;
   align-items: center;
   gap: 32px;
+  position: relative;
+  overflow: visible;
 }
 .header-link {
   color: #d1d5db;
@@ -83,6 +87,16 @@
 .header-btn:hover {
   background: #047857;
   transform: scale(1.05);
+}
+
+.header-user-access {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-user-access .header-btn {
+  margin: 0;
 }
 
 /* Hero Section */
@@ -421,7 +435,6 @@
 .footer-icon {
   width: 32px;
   height: 32px;
-  color: #34d399;
 }
 .footer-title {
   font-size: 1.3rem;

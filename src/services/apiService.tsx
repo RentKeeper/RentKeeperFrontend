@@ -1,12 +1,39 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
+const resolveToken = () => {
+  const cookieToken = Cookies.get("token");
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const localToken = window.localStorage?.getItem("token");
+    if (localToken) {
+      return localToken;
+    }
+
+    const sessionToken = window.sessionStorage?.getItem("token");
+    if (sessionToken) {
+      return sessionToken;
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+};
+
 function ApiService() {
   const baseURL = "http://localhost:5100/api";
   const appendRoute = (route: string) => `${baseURL}/${route}`;
 
   const headerConfig = () => {
-    const auth = Cookies.get("token");
+    const auth = resolveToken();
 
     return {
       headers: {

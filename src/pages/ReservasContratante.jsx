@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-	Shield,
 	Search,
 	MapPin,
 	Calendar,
@@ -15,6 +14,7 @@ import {
 	Phone,
 	Mail,
 	QrCode,
+	Star,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import "./ReservasContratante.css";
@@ -24,6 +24,7 @@ import { usuariosService } from "../services/usuarios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import { getUserIdFromToken } from "../utils/jwt";
 import UserMenu from "../components/UserMenu";
+import Logo from "../components/Logo";
 
 const resolveNumber = (value) => {
 	if (value === null || value === undefined || value === "") {
@@ -323,7 +324,7 @@ export default function ReservasContratante() {
 			<header className="reservas-contratante-header">
 				<div className="brand" onClick={() => navigate("/")}>
 					<div className="brand-icon">
-						<Shield size={22} />
+						<Logo size={32} />
 					</div>
 					<div>
 						<h1>RentKeeper</h1>
@@ -418,6 +419,16 @@ export default function ReservasContratante() {
 							{filteredReservas.map((reserva) => {
 								const anuncio = resolveAnuncio(reserva.anuncioId);
 								const jogador = resolveJogador(anuncio?.usuarioId);
+								const avaliacao =
+									reserva?.avaliacao ??
+									reserva?.raw?.AvaliacaoJogador ??
+									reserva?.raw?.avaliacaoJogador ??
+									null;
+								const aluguelId =
+									reserva?.id ??
+									reserva?.raw?.IdAluguel ??
+									reserva?.raw?.idAluguel ??
+									null;
 								return (
 									<div className="reserva-card" key={`${reserva.id}-${reserva.anuncioId}`}>
 										<div className="reserva-header">
@@ -483,6 +494,24 @@ export default function ReservasContratante() {
 													<Calendar size={16} />
 													<span>Contratado em: {formatDateTime(reserva.raw?.dataCriacao ?? reserva.raw?.DataCriacao)}</span>
 												</div>
+											</div>
+
+											<div className="avaliacao-info">
+												<h4>Avaliação</h4>
+												<div className={`avaliacao-status ${avaliacao ? "avaliado" : "pendente"}`}>
+													<Star size={16} />
+													<span>{avaliacao ? `Nota registrada: ${avaliacao}` : "Avaliação pendente"}</span>
+												</div>
+												<button
+													type="button"
+													className="avaliar-btn"
+													onClick={() => {
+														if (!aluguelId) return;
+														navigate(`/avaliacoes/${aluguelId}`);
+													}}
+												>
+													{avaliacao ? "Editar avaliação" : "Avaliar goleiro"}
+												</button>
 											</div>
 										</div>
 									</div>

@@ -10,6 +10,8 @@ import Pagamento from "./pages/Pagamento";
 import ReservasJogador from "./pages/ReservasJogador";
 import ReservasContratante from "./pages/ReservasContratante";
 import PerfilUsuario from "./pages/PerfilUsuario";
+import Avaliacoes from "./pages/Avaliacoes";
+import AvaliarAluguel from "./pages/AvaliarAluguel";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/reservas-jogador" element={<ReservasJogador />} />
         <Route path="/minhas-contratacoes" element={<ReservasContratante />} />
         <Route path="/perfil" element={<PerfilUsuario />} />
+        <Route path="/avaliacoes" element={<Avaliacoes />} />
+        <Route path="/avaliacoes/:aluguelId" element={<AvaliarAluguel />} />
       </Routes>
     </Router>
   );

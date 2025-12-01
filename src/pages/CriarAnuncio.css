@@ -73,7 +73,6 @@
 .header-icon {
   width: 2rem;
   height: 2rem;
-  color: #34d399;
   z-index: 2;
   position: relative;
 }
@@ -82,7 +81,7 @@
   position: absolute;
   width: 2rem;
   height: 2rem;
-  background: #34d399;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(16, 185, 129, 0.35));
   border-radius: 50%;
   filter: blur(8px);
   opacity: 0.3;

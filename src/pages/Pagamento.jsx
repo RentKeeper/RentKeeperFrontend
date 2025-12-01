@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
-  Shield,
   DollarSign,
   CheckCircle,
   Copy,
@@ -19,6 +18,7 @@ import { usuariosService } from "../services/usuarios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import { getUserIdFromToken } from "../utils/jwt";
 import "./Pagamento.css";
+import Logo from "../components/Logo";
 
 const FORMA_OPTIONS = [
   {
@@ -319,7 +319,7 @@ export default function Pagamento() {
 
         <div className="brand" onClick={() => navigate("/")}>
           <div className="brand-icon">
-            <Shield size={22} />
+            <Logo size={28} />
           </div>
           <div>
             <h1>RentKeeper</h1>

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-	Shield,
 	User,
 	Mail,
 	Phone,
@@ -17,6 +16,7 @@ import "./PerfilUsuario.css";
 import { usuariosService } from "../services/usuarios";
 import { getUserIdFromToken } from "../utils/jwt";
 import UserMenu from "../components/UserMenu";
+import Logo from "../components/Logo";
 
 const resolveToken = () => {
 	if (typeof window === "undefined") return null;
@@ -144,7 +144,7 @@ export default function PerfilUsuario() {
 				<header className="perfil-header">
 					<div className="brand" onClick={() => navigate("/")}>
 						<div className="brand-icon">
-							<Shield size={22} />
+							<Logo size={32} />
 						</div>
 						<div>
 							<h1>RentKeeper</h1>
@@ -169,7 +169,7 @@ export default function PerfilUsuario() {
 			<header className="perfil-header">
 				<div className="brand" onClick={() => navigate("/")}>
 					<div className="brand-icon">
-						<Shield size={22} />
+						<Logo size={32} />
 					</div>
 					<div>
 						<h1>RentKeeper</h1>

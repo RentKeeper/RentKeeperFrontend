@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { 
-  Shield, 
-  ArrowLeft, 
-  MapPin, 
-  Calendar, 
-  Clock, 
+import {
+  ArrowLeft,
+  MapPin,
+  Calendar,
+  Clock,
   DollarSign,
   User,
   MessageSquare,
@@ -16,6 +15,7 @@ import { mapAnuncioToBackend } from "../utils/anuncioMapper";
 import Cookies from "js-cookie";
 import { getUserIdFromToken } from "../utils/jwt";
 import "./CriarAnuncio.css";
+import Logo from "../components/Logo";
 
 export default function CriarAnuncio() {
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export default function CriarAnuncio() {
     horaPartida: "",
     preco: "",
     descricao: "",
-    posicao: "0", // 0 = Goleiro por padrão
+    posicao: "0",
     experiencia: "",
     disponibilidade: []
   });
@@ -111,7 +111,7 @@ export default function CriarAnuncio() {
           
           <div className="header-brand">
             <div className="header-icon-container">
-              <Shield className="header-icon" />
+              <Logo size={36} className="header-icon" />
               <div className="header-icon-glow"></div>
             </div>
             <h1 className="header-title">RentKeeper</h1>

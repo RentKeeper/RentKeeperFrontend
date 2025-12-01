@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-	Shield,
 	ArrowLeft,
 	Search,
 	Calendar,
@@ -21,6 +20,7 @@ import { usuariosService } from "../services/usuarios";
 import { mapAnuncioFromBackend } from "../utils/anuncioMapper";
 import { getUserIdFromToken } from "../utils/jwt";
 import UserMenu from "../components/UserMenu";
+import Logo from "../components/Logo";
 import "./Aluguel.css";
 
 const resolveNumber = (value) => {
@@ -618,7 +618,7 @@ export default function Aluguel() {
 
 				<div className="brand" onClick={() => navigate("/")}>
 					<div className="brand-icon">
-						<Shield size={22} />
+						<Logo size={32} />
 					</div>
 					<div>
 						<h1>RentKeeper</h1>
