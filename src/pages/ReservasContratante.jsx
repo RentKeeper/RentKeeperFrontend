@@ -15,6 +15,7 @@ import {
 	Mail,
 	QrCode,
 	Star,
+	Trash2,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import "./ReservasContratante.css";
@@ -88,6 +89,7 @@ export default function ReservasContratante() {
 	const [loadingJogadores, setLoadingJogadores] = useState(false);
 	const [loadingAnuncios, setLoadingAnuncios] = useState(false);
 	const [feedback, setFeedback] = useState({ error: "", success: "" });
+	const [deletingIds, setDeletingIds] = useState(() => new Set());
 	const mountedRef = useRef(true);
 
 	const userId = useMemo(() => {
@@ -307,6 +309,49 @@ export default function ReservasContratante() {
 		}
 	};
 
+	const handleDeleteReserva = async (aluguelId) => {
+		const parsedId = resolveNumber(aluguelId);
+		if (!parsedId) return;
+		const confirmed =
+			typeof window === "undefined"
+				? true
+				: window.confirm("Tem certeza que deseja remover esta contratação? Esta ação não pode ser desfeita.");
+		if (!confirmed) return;
+
+		setFeedback((prev) => ({ ...prev, error: "", success: "" }));
+		setDeletingIds((prev) => {
+			const next = new Set(prev);
+			next.add(parsedId);
+			return next;
+		});
+
+		try {
+			await aluguelService.remove(parsedId);
+			setReservas((prev) =>
+				prev.filter((item) => {
+					const currentId =
+						resolveNumber(item?.id) ??
+						resolveNumber(item?.raw?.IdAluguel) ??
+						resolveNumber(item?.raw?.idAluguel);
+					return currentId !== parsedId;
+				})
+			);
+			setFeedback((prev) => ({ ...prev, success: "Contratação removida com sucesso." }));
+		} catch (err) {
+			console.error("Erro ao remover contratação", err);
+			setFeedback((prev) => ({
+				...prev,
+				error: err?.response?.data?.mensagem ?? err?.message ?? "Não foi possível remover a contratação.",
+			}));
+		} finally {
+			setDeletingIds((prev) => {
+				const next = new Set(prev);
+				next.delete(parsedId);
+				return next;
+			});
+		}
+	};
+
 	useEffect(() => {
 		if (!feedback.success) return undefined;
 		const timer = setTimeout(() => setFeedback((prev) => ({ ...prev, success: "" })), 4000);
@@ -429,6 +474,7 @@ export default function ReservasContratante() {
 									reserva?.raw?.IdAluguel ??
 									reserva?.raw?.idAluguel ??
 									null;
+								const isDeleting = deletingIds.has(resolveNumber(aluguelId));
 								return (
 									<div className="reserva-card" key={`${reserva.id}-${reserva.anuncioId}`}>
 										<div className="reserva-header">
@@ -502,16 +548,36 @@ export default function ReservasContratante() {
 													<Star size={16} />
 													<span>{avaliacao ? `Nota registrada: ${avaliacao}` : "Avaliação pendente"}</span>
 												</div>
-												<button
-													type="button"
-													className="avaliar-btn"
-													onClick={() => {
-														if (!aluguelId) return;
-														navigate(`/avaliacoes/${aluguelId}`);
-													}}
-												>
-													{avaliacao ? "Editar avaliação" : "Avaliar goleiro"}
-												</button>
+												<div className="avaliacao-actions">
+													<button
+														type="button"
+														className="avaliar-btn"
+														onClick={() => {
+															if (!aluguelId) return;
+															navigate(`/avaliacoes/${aluguelId}`);
+														}}
+													>
+														{avaliacao ? "Editar avaliação" : "Avaliar goleiro"}
+													</button>
+													<button
+														type="button"
+														className="cancelar-btn"
+														disabled={isDeleting}
+														onClick={() => handleDeleteReserva(aluguelId)}
+													>
+														{isDeleting ? (
+															<>
+																<Loader2 className="spinner" size={15} />
+																Removendo...
+															</>
+														) : (
+															<>
+																<Trash2 size={15} />
+																Apagar anúncio
+															</>
+														)}
+													</button>
+												</div>
 											</div>
 										</div>
 									</div>

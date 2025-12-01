@@ -334,14 +334,16 @@
 	gap: 0.65rem;
 }
 
+
 .avaliacao-info {
 	background: rgba(30, 41, 59, 0.6);
 	border: 1px solid rgba(148, 163, 184, 0.25);
 	border-radius: 1rem;
-	padding: 1.25rem;
-	display: grid;
-	gap: 0.85rem;
-	align-content: start;
+	padding: 1rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	align-items: stretch;
 }
 
 .avaliacao-info h4 {
@@ -378,21 +380,73 @@
 	color: #facc15;
 }
 
+.avaliacao-actions {
+	display: grid;
+	gap: 0.5rem;
+}
+
 .avaliar-btn {
 	border: none;
-	border-radius: 0.85rem;
-	padding: 0.65rem 1.15rem;
+	border-radius: 0.75rem;
+	padding: 0.55rem 1rem;
 	font-weight: 600;
-	font-size: 0.95rem;
+	font-size: 0.9rem;
 	color: #0b1120;
 	background: linear-gradient(135deg, rgba(59, 130, 246, 0.92), rgba(14, 165, 233, 0.88));
 	cursor: pointer;
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	width: 100%;
+	max-width: 100%;
+	text-align: center;
 }
 
 .avaliar-btn:hover {
 	transform: translateY(-1px);
 	box-shadow: 0 14px 24px rgba(37, 99, 235, 0.28);
+}
+
+.avaliar-btn:disabled {
+	opacity: 0.75;
+	cursor: not-allowed;
+	box-shadow: none;
+	transform: none;
+}
+
+.cancelar-btn {
+	border: 1px solid rgba(239, 68, 68, 0.6);
+	border-radius: 0.75rem;
+	padding: 0.55rem 1rem;
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: #fca5a5;
+	background: rgba(239, 68, 68, 0.12);
+	cursor: pointer;
+	transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4rem;
+	width: 100%;
+	max-width: 100%;
+	text-align: center;
+}
+
+.cancelar-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 14px 24px rgba(239, 68, 68, 0.22);
+	background: rgba(239, 68, 68, 0.18);
+	color: #fee2e2;
+}
+
+.cancelar-btn:disabled {
+	opacity: 0.75;
+	cursor: not-allowed;
+	box-shadow: none;
+	transform: none;
 }
 
 @media (max-width: 768px) {

@@ -14,6 +14,8 @@ import {
 	AlertCircle,
 	RefreshCcw,
 	CheckCircle,
+	CheckCircle2,
+	Trash2,
 } from "lucide-react";
 import Cookies from "js-cookie";
 import "./ReservasJogador.css";
@@ -87,6 +89,8 @@ export default function ReservasJogador() {
 	const [loadingContratantes, setLoadingContratantes] = useState(false);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [feedback, setFeedback] = useState({ error: "", success: "" });
+	const [confirmedReservas, setConfirmedReservas] = useState(() => new Set());
+	const [deletingAnuncios, setDeletingAnuncios] = useState(() => new Set());
 	const mountedRef = useRef(true);
 
 	const userId = useMemo(() => {
@@ -334,6 +338,68 @@ export default function ReservasJogador() {
 		}
 	};
 
+	const handleConfirmReserva = (aluguelId) => {
+		const parsed = resolveNumber(aluguelId);
+		if (!parsed) return;
+		setConfirmedReservas((prev) => {
+			const next = new Set(prev);
+			next.add(parsed);
+			return next;
+		});
+		setFeedback((prev) => ({ ...prev, error: "", success: "Reserva marcada como confirmada." }));
+	};
+
+	const handleDeleteAnuncio = async (anuncioId) => {
+		const parsed = resolveNumber(anuncioId);
+		if (!parsed) return;
+		const confirmed =
+			typeof window === "undefined"
+				? true
+				: window.confirm("Tem certeza de que deseja apagar este anúncio? Reservas associadas deixarão de aparecer.");
+		if (!confirmed) return;
+
+		setFeedback((prev) => ({ ...prev, error: "", success: "" }));
+		setDeletingAnuncios((prev) => {
+			const next = new Set(prev);
+			next.add(parsed);
+			return next;
+		});
+
+		try {
+			await anunciosService.remove(parsed);
+			setAnunciosJogador((prev) => prev.filter((item) => resolveNumber(item.anuncioId ?? item.id) !== parsed));
+			setReservas((prev) => prev.filter((item) => resolveNumber(item.anuncioId) !== parsed));
+			setConfirmedReservas((prev) => {
+				const next = new Set(prev);
+				for (const reserva of reservas) {
+					const reservaAnuncio = resolveNumber(reserva?.anuncioId);
+					if (reservaAnuncio === parsed) {
+						const aluguelId =
+							resolveNumber(reserva?.id) ??
+							resolveNumber(reserva?.raw?.IdAluguel ?? reserva?.raw?.idAluguel);
+						if (aluguelId) {
+							next.delete(aluguelId);
+						}
+					}
+				}
+				return next;
+			});
+			setFeedback((prev) => ({ ...prev, success: "Anúncio removido com sucesso." }));
+		} catch (err) {
+			console.error("Erro ao remover anúncio", err);
+			setFeedback((prev) => ({
+				...prev,
+				error: err?.response?.data?.mensagem ?? err?.message ?? "Não foi possível remover o anúncio.",
+			}));
+		} finally {
+			setDeletingAnuncios((prev) => {
+				const next = new Set(prev);
+				next.delete(parsed);
+				return next;
+			});
+		}
+	};
+
 	useEffect(() => {
 		if (!feedback.success) return undefined;
 		const timer = setTimeout(() => setFeedback((prev) => ({ ...prev, success: "" })), 4000);
@@ -454,6 +520,17 @@ export default function ReservasJogador() {
 							{filteredReservas.map((reserva) => {
 								const anuncio = anuncioMap.get(resolveNumber(reserva.anuncioId));
 								const contratante = contratantes[reserva.contratanteId] ?? {};
+								const aluguelId =
+									reserva?.id ??
+									reserva?.raw?.IdAluguel ??
+									reserva?.raw?.idAluguel ??
+									null;
+								const anuncioId =
+									resolveNumber(anuncio?.anuncioId) ??
+									resolveNumber(anuncio?.id) ??
+									resolveNumber(reserva.anuncioId);
+								const isConfirmada = confirmedReservas.has(resolveNumber(aluguelId));
+								const isDeleting = deletingAnuncios.has(resolveNumber(anuncioId));
 								return (
 									<div className="reserva-card" key={`${reserva.id}-${reserva.anuncioId}`}>
 										<div className="reserva-header">
@@ -518,6 +595,39 @@ export default function ReservasJogador() {
 												<div className="info-row">
 													<Calendar size={16} />
 													<span>Criado em: {formatDateTime(reserva.raw?.dataCriacao ?? reserva.raw?.DataCriacao)}</span>
+												</div>
+											</div>
+											<div className="reserva-actions">
+												<h4>Ações do anúncio</h4>
+												<p>Confirme o atendimento ou remova o anúncio se não desejar mais ofertas.</p>
+												<div className="reserva-actions-buttons">
+													<button
+														type="button"
+														className={`confirmar-btn${isConfirmada ? " confirmada" : ""}`}
+														onClick={() => handleConfirmReserva(aluguelId)}
+														disabled={isConfirmada || isDeleting}
+													>
+														<CheckCircle2 size={16} />
+														<span>{isConfirmada ? "Reserva confirmada" : "Confirmar atendimento"}</span>
+													</button>
+													<button
+														type="button"
+														className="excluir-btn"
+														onClick={() => handleDeleteAnuncio(anuncioId)}
+														disabled={isDeleting}
+													>
+														{isDeleting ? (
+															<>
+																<Loader2 className="spinner" size={16} />
+																<span>Removendo...</span>
+															</>
+														) : (
+															<>
+																<Trash2 size={16} />
+																<span>Excluir anúncio</span>
+															</>
+														)}
+													</button>
 												</div>
 											</div>
 										</div>

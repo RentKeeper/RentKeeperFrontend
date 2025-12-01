@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { User, LogOut, CalendarCheck, ClipboardList, UserCog } from "lucide-react";
+import { User, LogOut, CalendarCheck, ClipboardList, UserCog, Users } from "lucide-react";
 import Cookies from "js-cookie";
 import "./UserMenu.css";
 import { getUserIdFromToken } from "../utils/jwt";
@@ -61,6 +61,10 @@ export default function UserMenu() {
 					<button type="button" className="user-menu-item" onClick={() => goTo("/minhas-contratacoes")}>
 						<ClipboardList size={16} />
 						<span>Minhas contratações</span>
+					</button>
+					<button type="button" className="user-menu-item" onClick={() => goTo("/times")}>
+						<Users size={16} />
+						<span>Meus times</span>
 					</button>
 					<button type="button" className="user-menu-item" onClick={handleLogout}>
 						<LogOut size={16} />

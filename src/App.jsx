@@ -12,6 +12,7 @@ import ReservasContratante from "./pages/ReservasContratante";
 import PerfilUsuario from "./pages/PerfilUsuario";
 import Avaliacoes from "./pages/Avaliacoes";
 import AvaliarAluguel from "./pages/AvaliarAluguel";
+import Times from "./pages/Times";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/perfil" element={<PerfilUsuario />} />
         <Route path="/avaliacoes" element={<Avaliacoes />} />
         <Route path="/avaliacoes/:aluguelId" element={<AvaliarAluguel />} />
+        <Route path="/times" element={<Times />} />
       </Routes>
     </Router>
   );
